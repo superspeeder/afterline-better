@@ -1,0 +1,6 @@
+rootProject.name = 'katengine-2'
+include 'katengine'
+include 'afterline'
+include 'server'
+include 'common'
+
