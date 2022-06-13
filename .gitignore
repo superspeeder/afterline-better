@@ -1,0 +1,8 @@
+/logs/
+*.log
+/imgui.ini
+/.gradle/
+/afterline/build/
+/common/build/
+/katengine/build/
+/server/build/
