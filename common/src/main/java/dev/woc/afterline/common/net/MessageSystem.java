@@ -1,10 +1,10 @@
 package dev.woc.afterline.common.net;
 
 
-import dev.woc.afterline.common.net.message.Message;
-import dev.woc.afterline.common.net.message.MessageHandler;
-import dev.woc.afterline.common.net.message.MessageID;
-import dev.woc.afterline.common.net.message.SubscribeMessage;
+import dev.woc.afterline.common.net.message.base.Message;
+import dev.woc.afterline.common.net.message.base.MessageHandler;
+import dev.woc.afterline.common.net.message.base.MessageID;
+import dev.woc.afterline.common.net.message.base.SubscribeMessage;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import org.apache.logging.log4j.LogManager;
@@ -19,7 +19,7 @@ public final class MessageSystem {
     public static final Logger LOGGER = LogManager.getLogger("MessageSystem");
     private static Map<Integer, List<MessageHandler>> messageHandlers = new HashMap<>();
 
-    private void initAllFrom(Class<?> clazz) {
+    public void initAllFrom(Class<?> clazz) {
         // scan class
         Arrays.stream(clazz.getMethods()).filter(method -> method.isAnnotationPresent(SubscribeMessage.class) && Modifier.isStatic(method.getModifiers()) && verifyArgs(method)).forEach(method -> {
             if (method.getAnnotation(SubscribeMessage.class).id() == -1) {

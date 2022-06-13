@@ -2,7 +2,8 @@ package dev.woc.afterline.client.net;
 
 import dev.woc.afterline.client.Afterline;
 import dev.woc.afterline.common.net.MessageSystem;
-import dev.woc.afterline.common.net.message.Message;
+import dev.woc.afterline.common.net.message.PingMessage;
+import dev.woc.afterline.common.net.message.base.Message;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
@@ -15,9 +16,13 @@ import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.ssl.SslProvider;
 
 import javax.net.ssl.SSLEngine;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import java.nio.file.Path;
 
 public class NetClient implements Runnable {
-    private static final String DEFAULT_SERVER_ADDR = "afterline.worldofcat.org";
+//    private static final String DEFAULT_SERVER_ADDR = "afterline.worldofcat.org";
+    private static final String DEFAULT_SERVER_ADDR = "127.0.0.1";
     private static final int DEFAULT_SERVER_PORT = 40020;
 
     private Channel channel;
@@ -35,6 +40,9 @@ public class NetClient implements Runnable {
         this.client = client;
         messageSystem = new MessageSystem();
         NETCLIENT = this;
+
+        Message.register(PingMessage.class);
+        messageSystem.initAllFrom(SimpleHandlers.class);
     }
 
     public MessageSystem getMessageSystem() {
@@ -44,10 +52,9 @@ public class NetClient implements Runnable {
     @Override
     public void run() {
         try {
-
             SslContext sslContext = SslContextBuilder.forClient()
                     .sslProvider(SslProvider.OPENSSL)
-                    .trustManager(NetClient.class.getClassLoader().getResourceAsStream("/certs/main.pem")).build();
+                    .trustManager(Path.of("certs/main.pem").toFile()).build();
 
             SSLEngine sslEngine = sslContext.newEngine(PooledByteBufAllocator.DEFAULT);
 
@@ -77,11 +84,13 @@ public class NetClient implements Runnable {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } finally {
-                workerGroup.shutdownGracefully();
-                System.out.println("Gracefully closed connection");
+                workerGroup.shutdownGracefully().sync();
+                Afterline.LOGGER.info("Gracefully closed worker group");
             }
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            Afterline.INSTANCE.onDisconnected();
         }
     }
 
@@ -92,5 +101,13 @@ public class NetClient implements Runnable {
     public static void launchAsThread(Afterline client) {
         THREAD = new Thread(new NetClient(client));
         THREAD.start();
+    }
+
+    public String getConnectionAddress() {
+        return serverAddress;
+    }
+
+    public int getConnectionPort() {
+        return serverPort;
     }
 }

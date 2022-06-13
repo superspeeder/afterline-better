@@ -1,15 +1,14 @@
 package dev.woc.afterline.server;
 
 import dev.woc.afterline.common.net.MessageSystem;
-import dev.woc.afterline.common.net.message.Message;
-import io.netty.bootstrap.Bootstrap;
+import dev.woc.afterline.common.net.message.PingMessage;
+import dev.woc.afterline.common.net.message.base.Message;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslHandler;
@@ -34,6 +33,9 @@ public class NetServer implements Runnable {
         this.server = server;
         messageSystem = new MessageSystem();
         NETSERVER = this;
+
+        Message.register(PingMessage.class);
+        messageSystem.initAllFrom(SimpleHandlers.class);
     }
 
     public MessageSystem getMessageSystem() {

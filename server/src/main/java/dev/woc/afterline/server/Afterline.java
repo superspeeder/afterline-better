@@ -10,6 +10,7 @@ public class Afterline {
     private NetServer net;
 
     public Afterline(int port) {
+        INSTANCE = this;
         net = new NetServer(this, port);
     }
 

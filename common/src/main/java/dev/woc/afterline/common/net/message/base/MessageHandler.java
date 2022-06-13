@@ -1,4 +1,4 @@
-package dev.woc.afterline.common.net.message;
+package dev.woc.afterline.common.net.message.base;
 
 import io.netty.channel.Channel;
 

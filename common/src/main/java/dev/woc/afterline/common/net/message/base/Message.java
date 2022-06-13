@@ -1,10 +1,9 @@
-package dev.woc.afterline.common.net.message;
+package dev.woc.afterline.common.net.message.base;
 
 import dev.woc.afterline.common.net.MessageSystem;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
