@@ -64,6 +64,8 @@ public abstract class Application {
 
         destroy();
         internalDestroy();
+        postPostDestroy();
+        System.exit(0);
     }
 
     private void postRender() {
@@ -128,6 +130,8 @@ public abstract class Application {
     public Window getWindow() {
         return window;
     }
+
+    public abstract void postPostDestroy();
 
 
     public static class Config {

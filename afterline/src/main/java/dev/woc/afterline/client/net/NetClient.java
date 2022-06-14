@@ -2,6 +2,8 @@ package dev.woc.afterline.client.net;
 
 import dev.woc.afterline.client.Afterline;
 import dev.woc.afterline.common.net.MessageSystem;
+import dev.woc.afterline.common.net.message.ConnectionCheck;
+import dev.woc.afterline.common.net.message.GoodbyeMessage;
 import dev.woc.afterline.common.net.message.PingMessage;
 import dev.woc.afterline.common.net.message.base.Message;
 import io.netty.bootstrap.Bootstrap;
@@ -16,9 +18,9 @@ import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.ssl.SslProvider;
 
 import javax.net.ssl.SSLEngine;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import java.nio.file.Path;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class NetClient implements Runnable {
 //    private static final String DEFAULT_SERVER_ADDR = "afterline.worldofcat.org";
@@ -34,6 +36,8 @@ public class NetClient implements Runnable {
 
     private static NetClient NETCLIENT;
     private static Thread THREAD;
+    private Timer connectCheckTimer = new Timer();
+    private Timer connectCheckTimer2 = new Timer();
 
 
     public NetClient(Afterline client) {
@@ -42,6 +46,8 @@ public class NetClient implements Runnable {
         NETCLIENT = this;
 
         Message.register(PingMessage.class);
+        Message.register(ConnectionCheck.class);
+        Message.register(GoodbyeMessage.class);
         messageSystem.initAllFrom(SimpleHandlers.class);
     }
 
@@ -78,12 +84,31 @@ public class NetClient implements Runnable {
                 channel = f.channel();
 
                 Afterline.INSTANCE.onConnectToServer();
+                connectCheckTimer = new Timer();
+                connectCheckTimer.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        Afterline.INSTANCE.receivedConnectionConfirm = false;
+                        postMessage(new ConnectionCheck());
+                        connectCheckTimer2.schedule(new TimerTask() {
+                            @Override
+                            public void run() {
+                                if (!Afterline.INSTANCE.receivedConnectionConfirm) {
+                                    Afterline.LOGGER.error("Connection timed out");
+                                    channel.close();
+                                } else {
+                                    Afterline.LOGGER.debug("Connection confirmed");
+                                }
+                            }
+                        }, 10_000); // TIMEOUT is 10s
+                    }
+                }, 0, 30_000);
 
                 channel.closeFuture().sync();
 
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            } catch (InterruptedException ignored) {
             } finally {
+                connectCheckTimer.cancel();
                 workerGroup.shutdownGracefully().sync();
                 Afterline.LOGGER.info("Gracefully closed worker group");
             }
@@ -109,5 +134,9 @@ public class NetClient implements Runnable {
 
     public int getConnectionPort() {
         return serverPort;
+    }
+
+    public Channel getChannel() {
+        return channel;
     }
 }

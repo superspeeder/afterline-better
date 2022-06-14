@@ -1,6 +1,6 @@
 /logs/
 *.log
-/imgui.ini
+imgui.ini
 /.gradle/
 /afterline/build/
 /common/build/

@@ -7,6 +7,7 @@ import dev.woc.afterline.common.net.message.base.MessageID;
 import dev.woc.afterline.common.net.message.base.SubscribeMessage;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.util.concurrent.BlockingOperationException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -60,6 +61,8 @@ public final class MessageSystem {
             channel.writeAndFlush(buf).sync();
         } catch (InterruptedException e) {
             LOGGER.catching(e);
+        } catch (BlockingOperationException e) {
+            LOGGER.warn("Failed to sync message post operation.");
         }
     }
 

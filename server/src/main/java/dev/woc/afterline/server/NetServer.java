@@ -1,6 +1,8 @@
 package dev.woc.afterline.server;
 
 import dev.woc.afterline.common.net.MessageSystem;
+import dev.woc.afterline.common.net.message.ConnectionCheck;
+import dev.woc.afterline.common.net.message.GoodbyeMessage;
 import dev.woc.afterline.common.net.message.PingMessage;
 import dev.woc.afterline.common.net.message.base.Message;
 import io.netty.bootstrap.ServerBootstrap;
@@ -35,7 +37,14 @@ public class NetServer implements Runnable {
         NETSERVER = this;
 
         Message.register(PingMessage.class);
+        Message.register(ConnectionCheck.class);
+        Message.register(GoodbyeMessage.class);
+
         messageSystem.initAllFrom(SimpleHandlers.class);
+    }
+
+    public static NetServer getInstance() {
+        return NETSERVER;
     }
 
     public MessageSystem getMessageSystem() {

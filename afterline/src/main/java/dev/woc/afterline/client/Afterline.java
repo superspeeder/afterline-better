@@ -2,6 +2,7 @@ package dev.woc.afterline.client;
 
 import dev.woc.afterline.client.net.NetClient;
 import dev.woc.afterline.client.windows.AboutWindow;
+import dev.woc.afterline.common.net.message.GoodbyeMessage;
 import dev.woc.afterline.common.net.message.PingMessage;
 import dev.woc.katengine.Application;
 import imgui.ImGui;
@@ -14,8 +15,6 @@ import org.apache.logging.log4j.Logger;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAmount;
-import java.time.temporal.TemporalUnit;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Timer;
@@ -28,11 +27,13 @@ public class Afterline extends Application {
     public static final String VERSION = "0.1.0a";
     public static final Logger LOGGER = LogManager.getLogger("Afterline");
     private static final int RECONNECT_COOLDOWN = 30;
+    private int nextCooldown = RECONNECT_COOLDOWN;
 
     public static Afterline INSTANCE;
 
     private static int defaultWindowFlags = ImGuiWindowFlags.MenuBar | ImGuiWindowFlags.NoCollapse ;
     public static final Set<AppWindow> windows = new HashSet<>();
+    public boolean receivedConnectionConfirm = false;
 
     private NetClient net;
     private Thread netThread;
@@ -90,6 +91,17 @@ public class Afterline extends Application {
                 if (ImGui.menuItem("About")) {
                     AboutWindow.INSTANCE.show();
                 }
+
+                if (!isConnected) {
+                    ImGui.beginDisabled();
+                }
+                if (ImGui.menuItem("Force Reconnect")) {
+                    forceReconnect();
+                }
+                if (!isConnected) {
+                    ImGui.endDisabled();
+                }
+
                 ImGui.endMenu();
             }
             ImGui.endMenuBar();
@@ -98,16 +110,39 @@ public class Afterline extends Application {
         ImGui.end();
     }
 
+    private void forceReconnect() {
+        nextCooldown = 0;
+        net.postMessage(new GoodbyeMessage());
+        net.getChannel().close();
+    }
+
     @Override
     public void destroy() {
         continueTryingToConnect = false;
-        netThread.interrupt();
+        net.postMessage(new GoodbyeMessage());
         reconnectTimer.cancel();
+        net.getChannel().close();
+        if (netThread.isAlive()) {
+            netThread.interrupt();
+        }
+    }
+
+    @Override
+    public void postPostDestroy() {
+        if (netThread.isAlive()) {
+            try {
+                netThread.join(60_000); // At most wait a minute before continuing to force exit. Keeps the any problems from the app trying to exist in a broken state from causing problems.
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     public void onConnectToServer() {
         net.postMessage(new PingMessage());
         isConnected = true;
+        connectionRetries = 0;
+        nextCooldown = 0;
     }
 
     public boolean isConnected() {
@@ -129,14 +164,19 @@ public class Afterline extends Application {
     public void onDisconnected() {
         isConnected = false;
         if (continueTryingToConnect) {
-            LOGGER.warn("Lost/Failed Connection, retrying in 30 seconds");
+            LOGGER.warn("Lost/Failed Connection, retrying in {} seconds", nextCooldown);
             reconnectTimer.schedule(new TimerTask() {
                 @Override
                 public void run() {
                     tryConnect();
                 }
-            }, 1000 * RECONNECT_COOLDOWN);
+            }, 1000 * nextCooldown);
+            nextCooldown = RECONNECT_COOLDOWN;
             nextReconnect = Instant.now().plus(Duration.of(30, ChronoUnit.SECONDS));
         }
+    }
+
+    public int getReconnectAttempts() {
+        return connectionRetries;
     }
 }
