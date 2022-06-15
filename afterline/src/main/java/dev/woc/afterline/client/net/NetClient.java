@@ -16,16 +16,18 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.ssl.SslProvider;
+import io.netty.resolver.InetSocketAddressResolver;
 
 import javax.net.ssl.SSLEngine;
+import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class NetClient implements Runnable {
-//    private static final String DEFAULT_SERVER_ADDR = "afterline.worldofcat.org";
-    private static final String DEFAULT_SERVER_ADDR = "127.0.0.1";
-    private static final int DEFAULT_SERVER_PORT = 40020;
+    private static final String DEFAULT_SERVER_ADDR = "afterline.woc.dev";
+//    private static final String DEFAULT_SERVER_ADDR = "127.0.0.1";
+    private static final int DEFAULT_SERVER_PORT = 40060;
 
     private Channel channel;
     private Afterline client;
@@ -80,7 +82,7 @@ public class NetClient implements Runnable {
                     }
                 });
 
-                ChannelFuture f = b.connect(serverAddress, serverPort).sync();
+                ChannelFuture f = b.connect().sync();
                 channel = f.channel();
 
                 Afterline.INSTANCE.onConnectToServer();

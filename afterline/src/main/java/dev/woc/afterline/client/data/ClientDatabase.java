@@ -78,6 +78,4 @@ public class ClientDatabase {
             Afterline.LOGGER.throwing(e);
         }
     }
-
-
 }
