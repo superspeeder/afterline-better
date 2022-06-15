@@ -7,6 +7,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
 
-@MessageID(id = 2)
+@MessageID(id = 4)
 public class ConnectionCheck extends BlankMessage {
 }

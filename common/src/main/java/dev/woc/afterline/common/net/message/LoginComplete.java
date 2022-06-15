@@ -7,7 +7,7 @@ import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
 import dev.woc.afterline.common.net.message.base.Message;
 
-@MessageID(id = 3)
+@MessageID(id = 5)
 public class LoginComplete extends Message {
 
     private String realUsername;
