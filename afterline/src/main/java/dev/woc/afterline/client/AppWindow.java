@@ -9,6 +9,7 @@ public abstract class AppWindow {
     private String title;
     private int flags;
     private ImBoolean visible = new ImBoolean(false);
+    private boolean wasVisibleBefore = false;
 
     public AppWindow(String title, int flags) {
         this.title = title;
@@ -18,12 +19,24 @@ public abstract class AppWindow {
 
     public final void draw() {
         if (visible.get()) {
+            if (!wasVisibleBefore) {
+                this.onShow();
+            }
             if (ImGui.begin(title, visible, flags)) {
                 drawContents();
                 ImGui.end();
             }
+        } else {
+            if (wasVisibleBefore) {
+                this.onHide();
+            }
         }
+        wasVisibleBefore = visible.get();
     }
+
+    protected abstract void onHide();
+
+    protected abstract void onShow();
 
     public void show() {
         visible.set(true);

@@ -15,6 +15,16 @@ public class AboutWindow extends AppWindow {
     }
 
     @Override
+    protected void onHide() {
+
+    }
+
+    @Override
+    protected void onShow() {
+
+    }
+
+    @Override
     public void drawContents() {
         ImGui.text("Afterline Version " + Afterline.VERSION);
         ImGui.text("Built with KatEngine Version " + KatEngine.VERSION);

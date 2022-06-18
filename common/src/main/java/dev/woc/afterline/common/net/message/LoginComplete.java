@@ -16,6 +16,10 @@ public class LoginComplete extends Message {
 
     }
 
+    public LoginComplete(String username) {
+        realUsername = username;
+    }
+
     @Override
     protected void readFromBuffer(long msgSize, ByteBuf msgData) {
         realUsername = Utils.readNextString(msgData);

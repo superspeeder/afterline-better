@@ -2,6 +2,7 @@ package dev.woc.afterline.client;
 
 import dev.woc.afterline.client.net.NetClient;
 import dev.woc.afterline.client.windows.AboutWindow;
+import dev.woc.afterline.client.windows.LoginWindow;
 import dev.woc.afterline.common.net.message.GoodbyeMessage;
 import dev.woc.afterline.common.net.message.PingMessage;
 import dev.woc.katengine.Application;
@@ -31,6 +32,8 @@ public class Afterline extends Application {
 
     public static Afterline INSTANCE;
 
+    private String currentUsername;
+
     private static int defaultWindowFlags = ImGuiWindowFlags.MenuBar | ImGuiWindowFlags.NoCollapse ;
     public static final Set<AppWindow> windows = new HashSet<>();
     public boolean receivedConnectionConfirm = false;
@@ -53,6 +56,7 @@ public class Afterline extends Application {
         tryConnect();
 
         ImGui.styleColorsDark();
+        LoginWindow.INSTANCE.show();
     }
 
     public void tryConnect() {
@@ -102,12 +106,36 @@ public class Afterline extends Application {
                     ImGui.endDisabled();
                 }
 
+                if (currentUsername != null) {
+                    ImGui.beginDisabled();
+                }
+                if (ImGui.menuItem("Log In")) {
+                    LoginWindow.INSTANCE.show();
+                }
+                if (currentUsername != null) {
+                    ImGui.endDisabled();
+                }
+
+                if (currentUsername == null) {
+                    ImGui.beginDisabled();
+                }
+                if (ImGui.menuItem("Log Out")) {
+                    logOut();
+                }
+                if (currentUsername == null) {
+                    ImGui.endDisabled();
+                }
+
                 ImGui.endMenu();
             }
             ImGui.endMenuBar();
         }
 
         ImGui.end();
+    }
+
+    private void logOut() {
+        currentUsername = null;
     }
 
     private void forceReconnect() {
@@ -119,7 +147,9 @@ public class Afterline extends Application {
     @Override
     public void destroy() {
         continueTryingToConnect = false;
-        net.postMessage(new GoodbyeMessage());
+        if (isConnected) {
+            net.postMessage(new GoodbyeMessage());
+        }
         reconnectTimer.cancel();
         net.getChannel().close();
         if (netThread.isAlive()) {
@@ -178,5 +208,13 @@ public class Afterline extends Application {
 
     public int getReconnectAttempts() {
         return connectionRetries;
+    }
+
+    public void setCurrentUser(String username) {
+        this.currentUsername = username;
+    }
+
+    public String getUsername() {
+        return currentUsername;
     }
 }

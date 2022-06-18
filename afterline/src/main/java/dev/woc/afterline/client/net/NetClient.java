@@ -2,9 +2,7 @@ package dev.woc.afterline.client.net;
 
 import dev.woc.afterline.client.Afterline;
 import dev.woc.afterline.common.net.MessageSystem;
-import dev.woc.afterline.common.net.message.ConnectionCheck;
-import dev.woc.afterline.common.net.message.GoodbyeMessage;
-import dev.woc.afterline.common.net.message.PingMessage;
+import dev.woc.afterline.common.net.message.*;
 import dev.woc.afterline.common.net.message.base.Message;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -16,10 +14,8 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.ssl.SslProvider;
-import io.netty.resolver.InetSocketAddressResolver;
 
 import javax.net.ssl.SSLEngine;
-import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -36,7 +32,7 @@ public class NetClient implements Runnable {
     private String serverAddress = DEFAULT_SERVER_ADDR;
     private int serverPort = DEFAULT_SERVER_PORT;
 
-    private static NetClient NETCLIENT;
+    public static NetClient INSTANCE;
     private static Thread THREAD;
     private Timer connectCheckTimer = new Timer();
     private Timer connectCheckTimer2 = new Timer();
@@ -45,11 +41,13 @@ public class NetClient implements Runnable {
     public NetClient(Afterline client) {
         this.client = client;
         messageSystem = new MessageSystem();
-        NETCLIENT = this;
+        INSTANCE = this;
 
         Message.register(PingMessage.class);
         Message.register(ConnectionCheck.class);
         Message.register(GoodbyeMessage.class);
+        Message.register(FederatedLoginRequest.class);
+        Message.register(LoginComplete.class);
         messageSystem.initAllFrom(SimpleHandlers.class);
     }
 
@@ -82,7 +80,7 @@ public class NetClient implements Runnable {
                     }
                 });
 
-                ChannelFuture f = b.connect().sync();
+                ChannelFuture f = b.connect(serverAddress, serverPort).sync();
                 channel = f.channel();
 
                 Afterline.INSTANCE.onConnectToServer();
